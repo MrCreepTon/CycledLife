@@ -1,0 +1,8 @@
+name: CycledLife
+version: ${project.version}
+main: me.mrcreepton.cycledlife.Main
+api-version: 1.16.3
+commands:
+  time:
+    usage: /time
+    description: Позволяет узнать, сколько осталось времени
