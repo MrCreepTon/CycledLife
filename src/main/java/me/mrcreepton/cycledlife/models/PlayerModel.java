@@ -7,6 +7,7 @@ public class PlayerModel {
     private String playerName;
     private int timeLeft;
     private String worldName;
+    private int worldType = 0;
 
     public PlayerModel(String playerName, String worldName) {
         this.playerName = playerName;
@@ -18,6 +19,14 @@ public class PlayerModel {
         this.playerName = playerName;
         this.timeLeft = timeLeft;
         this.worldName = worldName;
+    }
+
+    public int getWorldType() {
+        return worldType;
+    }
+
+    public void setWorldType(int worldType) {
+        this.worldType = worldType;
     }
 
     public String getWorldName() {

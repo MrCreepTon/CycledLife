@@ -9,6 +9,7 @@ import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
+import org.omg.CORBA.Environment;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -85,10 +86,11 @@ public class GameManager {
         spawnData.setSpawnyaw(Float.parseFloat(fConfig.getString(path + "spawnyaw")));
         spawnData.setSpawnpitch(Float.parseFloat(fConfig.getString(path + "spawnpitch")));
         spawnData.setEffects((Collection<PotionEffect>) fConfig.get(path + "effects"));
+        spawnData.setWorldtype(fConfig.getInt(path + "worldtype"));
         spawnData.setItems(itemsContent);
         spawnData.setEnderchest(enderChestContent);
         spawnData.setArmor(armorContent);
-        spawnData.setWorld(world);
+        spawnData.setWorld(worldName);
 
         return spawnData;
 
@@ -96,15 +98,17 @@ public class GameManager {
 
     public static World getEmptyWorld()
     {
-        for (World world : Bukkit.getServer().getWorlds())
-        {
-            String worldName = world.getName();
-            Bukkit.getLogger().info(worldName);
-            if (worldName.endsWith("CL"))
-            {
-                if (!isAnyPlayerInWorld(worldName))
-                    return Bukkit.getServer().getWorld(worldName);
+        try {
+            for (String worldName : new WorldConfig((Main) Bukkit.getPluginManager().getPlugin("CycledLife")).getConfig().getConfigurationSection("worlds").getKeys(false)) {
+                if (worldName.endsWith("CL")) {
+                    if (!isAnyPlayerInWorld(worldName))
+                        return Bukkit.getServer().getWorld(worldName);
+                }
             }
+        }
+        catch (Exception e)
+        {
+
         }
         return generateNewWorld();
     }
@@ -117,11 +121,36 @@ public class GameManager {
         mainConfig.getConfig().set("totalWorlds", GameManager.totalWorldsCreated);
         mainConfig.saveConfig();
 
-        WorldCreator worldCreator = new WorldCreator("world_" + String.valueOf(GameManager.totalWorldsCreated) + "_CL");
-        worldCreator.environment(World.Environment.NORMAL);
-        worldCreator.type(WorldType.NORMAL);
+        World world = null;
 
-        World world = worldCreator.createWorld();
+        for (int i = 0; i < 3; i++)
+        {
+            String worldName = "";
+            World.Environment environment;
+            if (i == 0) {
+                worldName = "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_CL";
+                environment = World.Environment.NORMAL;
+            }
+            else if (i == 1)
+            {
+                worldName = "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_nether_CL";
+                environment = World.Environment.NETHER;
+            }
+            else {
+                worldName = "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_the_end_CL";
+                environment = World.Environment.THE_END;
+            }
+
+            WorldCreator worldCreator = new WorldCreator(worldName);
+            worldCreator.environment(environment);
+            worldCreator.type(WorldType.NORMAL);
+
+            if (i == 0)
+                world = worldCreator.createWorld();
+            else
+                worldCreator.createWorld();
+            Bukkit.getLogger().info("Creating world " + worldName);
+        }
 
         WorldConfig config = new WorldConfig((Main)Bukkit.getPluginManager().getPlugin("CycledLife"));
 
@@ -143,6 +172,7 @@ public class GameManager {
         config.getConfig().set("worlds." + "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_CL" + ".spawnz", location.getZ());
         config.getConfig().set("worlds." + "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_CL" + ".spawnyaw", location.getYaw());
         config.getConfig().set("worlds." + "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_CL" + ".spawnpitch", location.getPitch());
+        config.getConfig().set("worlds." + "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_CL" + ".worldtype", 0);
 
         config.saveConfig();
 

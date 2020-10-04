@@ -6,7 +6,6 @@ import me.mrcreepton.cycledlife.configs.WorldConfig;
 import me.mrcreepton.cycledlife.models.PlayerModel;
 import me.mrcreepton.cycledlife.models.SpawnData;
 import me.mrcreepton.cycledlife.utils.LocationUtils;
-import me.mrcreepton.cycledlife.utils.SendUtils;
 import org.bukkit.BanList;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -26,21 +25,6 @@ import java.util.Date;
 public class PlayerJoinEvent implements Listener {
 
     @EventHandler
-    public static void onPlayerWorldChange(PlayerChangedWorldEvent e)
-    {
-        if (!e.getPlayer().getWorld().getName().endsWith("CL")) {
-            Location location = LocationUtils.getRandomLocation(-1000, 1000, e.getFrom());
-
-            e.getPlayer().teleport(location);
-            e.getPlayer().setBedSpawnLocation(location);
-
-            WorldConfig config = new WorldConfig((Main) Bukkit.getPluginManager().getPlugin("CycledLife"));
-
-            e.getPlayer().sendMessage("§7§l[§8§lCycled§c§lLife§7§l]: §fВидимо, произошла неполадка. Мы вернули тебя обратно в твой мир ^_^");
-        }
-    }
-
-    @EventHandler
     public static void onPlayerLogin(PlayerLoginEvent e)
     {
         if (!GameManager.isLoaded)
@@ -55,10 +39,21 @@ public class PlayerJoinEvent implements Listener {
         player.setHealth(data.getHealth());
         player.setFoodLevel(data.getSatiety());
 
-        Location location = new Location(data.getWorld(), data.getX(), data.getY(), data.getZ(), data.getYaw(), data.getPitch());
+        String worldName = data.getWorld();
+
+        World defaultWorld = Bukkit.getServer().getWorld(worldName);
+
+        if (data.getWorldtype() == 1)
+            worldName = worldName.split("_CL")[0] + "_nether_CL";
+        else if (data.getWorldtype() == 2)
+            worldName = worldName.split("_CL")[0] + "_the_end_CL";
+
+        World world = Bukkit.getServer().getWorld(worldName);
+
+        Location location = new Location(world, data.getX(), data.getY(), data.getZ(), data.getYaw(), data.getPitch());
         player.teleport(location);
 
-        Location spawnLocation = new Location(data.getWorld(), data.getSpawnx(), data.getSpawny(), data.getSpawnz(), data.getSpawnyaw(), data.getSpawnpitch());
+        Location spawnLocation = new Location(defaultWorld, data.getSpawnx(), data.getSpawny(), data.getSpawnz(), data.getSpawnyaw(), data.getSpawnpitch());
         player.setBedSpawnLocation(spawnLocation, true);
 
         player.getInventory().clear();
@@ -84,10 +79,8 @@ public class PlayerJoinEvent implements Listener {
             // ok
         }
 
-        PlayerModel playerModel = new PlayerModel(player.getName(), data.getWorld().getName());
+        PlayerModel playerModel = new PlayerModel(player.getName(), defaultWorld.getName());
         GameManager.players.add(playerModel);
-
-        SendUtils.sendData("CLChannel", "Test12345");
 
         player.sendMessage("§7§l[§8§lCycled§c§lLife§7§l]: §fОкей, у тебя есть 30 минут. Тебе выданы все ресурсы предыдущего игрока и все остальное. Удачи!");
         player.sendMessage("§7§l[§8§lCycled§c§lLife§7§l]: §fP.S: Для того, чтобы узнать время, используй §8/§ctime");
@@ -96,44 +89,9 @@ public class PlayerJoinEvent implements Listener {
     public static void onPlayerQuit(PlayerQuitEvent e)
     {
         Player player = e.getPlayer();
-
         PlayerModel model = GameManager.getPlayerModel(player.getName());
 
-        WorldConfig config = new WorldConfig((Main) Bukkit.getPluginManager().getPlugin("CycledLife"));
-        Location location = player.getLocation();
-
-        Location spawnLocation = player.getBedSpawnLocation();
-
-        if (spawnLocation == null)
-        {
-            spawnLocation = LocationUtils.getRandomLocation(-1000, 1000, e.getPlayer().getWorld());
-        }
-
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".health", player.getHealth());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".satiety", player.getFoodLevel());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".effects", player.getActivePotionEffects());
-        for (int i = 0; i < player.getInventory().getArmorContents().length; i++) {
-            config.getConfig().set("worlds." + player.getWorld().getName()+ ".armor." + i, player.getEquipment().getArmorContents()[i]);
-        }
-        for (int i = 0; i < player.getInventory().getContents().length; i++) {
-            config.getConfig().set("worlds." + player.getWorld().getName()+ ".items." + i, player.getInventory().getContents()[i]);
-        }
-        for (int i = 0; i < player.getEnderChest().getContents().length; i++) {
-            config.getConfig().set("worlds." + player.getWorld().getName()+ ".enderchest." + i, player.getEnderChest().getContents()[i]);
-        }
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".x", location.getX());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".y", location.getY());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".z", location.getZ());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".yaw", location.getYaw());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".pitch", location.getPitch());
-
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".spawnx", spawnLocation.getX());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".spawny", spawnLocation.getY());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".spawnz", spawnLocation.getZ());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".spawnyaw", spawnLocation.getYaw());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".spawnpitch", spawnLocation.getPitch());
-
-        config.saveConfig();
+        saveWorldForPlayer(player);
         
         GameManager.players.remove(model);
 
@@ -144,7 +102,17 @@ public class PlayerJoinEvent implements Listener {
     public static void onPlayerKickEvent(PlayerKickEvent e)
     {
         Player player = e.getPlayer();
+        PlayerModel model = GameManager.getPlayerModel(player.getName());
 
+        saveWorldForPlayer(player);
+
+        GameManager.players.remove(model);
+
+        Bukkit.getBanList(BanList.Type.NAME).addBan(player.getName(), "Перед следующей игрой нужно подождать минимум 3 часа", new Date(System.currentTimeMillis() + 3*60*60*1000), null);
+    }
+
+    private static void saveWorldForPlayer(Player player)
+    {
         PlayerModel model = GameManager.getPlayerModel(player.getName());
 
         WorldConfig config = new WorldConfig((Main) Bukkit.getPluginManager().getPlugin("CycledLife"));
@@ -154,38 +122,41 @@ public class PlayerJoinEvent implements Listener {
 
         if (spawnLocation == null)
         {
-            spawnLocation = LocationUtils.getRandomLocation(-1000, 1000, e.getPlayer().getWorld());
+            spawnLocation = LocationUtils.getRandomLocation(-1000, 1000, player.getWorld());
         }
 
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".health", player.getHealth());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".satiety", player.getFoodLevel());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".effects", player.getActivePotionEffects());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".health", player.getHealth());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".satiety", player.getFoodLevel());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".effects", player.getActivePotionEffects());
         for (int i = 0; i < player.getInventory().getArmorContents().length; i++) {
-            config.getConfig().set("worlds." + player.getWorld().getName()+ ".armor." + i, player.getEquipment().getArmorContents()[i]);
+            config.getConfig().set("worlds." + model.getWorldName()+ ".armor." + i, player.getEquipment().getArmorContents()[i]);
         }
         for (int i = 0; i < player.getInventory().getContents().length; i++) {
-            config.getConfig().set("worlds." + player.getWorld().getName()+ ".items." + i, player.getInventory().getContents()[i]);
+            config.getConfig().set("worlds." + model.getWorldName()+ ".items." + i, player.getInventory().getContents()[i]);
         }
         for (int i = 0; i < player.getEnderChest().getContents().length; i++) {
-            config.getConfig().set("worlds." + player.getWorld().getName()+ ".enderchest." + i, player.getEnderChest().getContents()[i]);
+            config.getConfig().set("worlds." + model.getWorldName()+ ".enderchest." + i, player.getEnderChest().getContents()[i]);
         }
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".x", location.getX());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".y", location.getY());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".z", location.getZ());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".yaw", location.getYaw());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".pitch", location.getPitch());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".x", location.getX());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".y", location.getY());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".z", location.getZ());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".yaw", location.getYaw());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".pitch", location.getPitch());
 
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".spawnx", spawnLocation.getX());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".spawny", spawnLocation.getY());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".spawnz", spawnLocation.getZ());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".spawnyaw", spawnLocation.getYaw());
-        config.getConfig().set("worlds." + player.getWorld().getName()+ ".spawnpitch", spawnLocation.getPitch());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".spawnx", spawnLocation.getX());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".spawny", spawnLocation.getY());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".spawnz", spawnLocation.getZ());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".spawnyaw", spawnLocation.getYaw());
+        config.getConfig().set("worlds." + model.getWorldName()+ ".spawnpitch", spawnLocation.getPitch());
+
+        if (player.getWorld().getName().endsWith("_nether_CL"))
+            config.getConfig().set("worlds." + model.getWorldName()+ ".worldtype", 1);
+        else if (player.getWorld().getName().endsWith("_the_end_CL"))
+            config.getConfig().set("worlds." + model.getWorldName()+ ".worldtype", 2);
+        else
+            config.getConfig().set("worlds." + model.getWorldName()+ ".worldtype", 0);
 
         config.saveConfig();
-
-        GameManager.players.remove(model);
-
-        Bukkit.getBanList(BanList.Type.NAME).addBan(player.getName(), "Перед следующей игрой нужно подождать минимум 3 часа", new Date(System.currentTimeMillis() + 3*60*60*1000), null);
     }
 
 }

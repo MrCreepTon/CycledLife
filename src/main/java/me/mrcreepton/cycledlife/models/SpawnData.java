@@ -22,11 +22,12 @@ public class SpawnData {
     private float spawnz = 0;
     private float spawnpitch = 0;
     private float spawnyaw = 0;
+    private int worldtype = 0;
     private ItemStack[] enderchest;
     private ItemStack[] items;
     private Collection<PotionEffect> effects;
     private ItemStack[] armor;
-    private World world;
+    private String world;
 
     public SpawnData() {
     }
@@ -37,6 +38,14 @@ public class SpawnData {
 
     public void setEnderchest(ItemStack[] enderchest) {
         this.enderchest = enderchest;
+    }
+
+    public int getWorldtype() {
+        return worldtype;
+    }
+
+    public void setWorldtype(int worldtype) {
+        this.worldtype = worldtype;
     }
 
     public float getSpawnx() {
@@ -159,11 +168,11 @@ public class SpawnData {
         this.armor = armor;
     }
 
-    public World getWorld() {
+    public String getWorld() {
         return world;
     }
 
-    public void setWorld(World world) {
+    public void setWorld(String world) {
         this.world = world;
     }
 }
