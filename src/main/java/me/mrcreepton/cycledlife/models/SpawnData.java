@@ -28,8 +28,26 @@ public class SpawnData {
     private Collection<PotionEffect> effects;
     private ItemStack[] armor;
     private String world;
+    private float xp;
+    private int level;
 
     public SpawnData() {
+    }
+
+    public float getXp() {
+        return xp;
+    }
+
+    public void setXp(float xp) {
+        this.xp = xp;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
     }
 
     public ItemStack[] getEnderchest() {

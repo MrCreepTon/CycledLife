@@ -9,12 +9,8 @@ import me.mrcreepton.cycledlife.models.PlayerModel;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 public final class Main extends JavaPlugin {
@@ -115,11 +111,16 @@ public final class Main extends JavaPlugin {
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
             @Override
             public void run() {
-                for (PlayerModel playerModel : GameManager.players)
+                try {
+                    for (PlayerModel playerModel : GameManager.players) {
+                        playerModel.setTimeLeft(playerModel.getTimeLeft() - 1);
+                        if (playerModel.getTimeLeft() <= 0)
+                            getServer().getPlayer(playerModel.getPlayerName()).kickPlayer("Вы проиграли до лимита. Теперь нужно подождать минимум 3 часа.");
+                    }
+                }
+                catch (Exception e)
                 {
-                    playerModel.setTimeLeft(playerModel.getTimeLeft() - 1);
-                    if (playerModel.getTimeLeft() <= 0)
-                        getServer().getPlayer(playerModel.getPlayerName()).kickPlayer("Вы поиграли 30 минут. Теперь нужно подождать минимум 3 часа.");
+
                 }
             }
         }, 20L, 20L);

@@ -2,6 +2,8 @@ package me.mrcreepton.cycledlife.commands;
 
 import me.mrcreepton.cycledlife.GameManager;
 import me.mrcreepton.cycledlife.models.PlayerModel;
+import me.mrcreepton.cycledlife.models.TimeData;
+import me.mrcreepton.cycledlife.utils.TimeUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -18,9 +20,8 @@ public class TimeExecutor implements CommandExecutor {
             if (model != null)
             {
                 int time = model.getTimeLeft();
-                long minutes = TimeUnit.SECONDS.toMinutes(time);
-                long seconds = TimeUnit.SECONDS.toSeconds(time) - (TimeUnit.SECONDS.toMinutes(time) * 60);
-                sender.sendMessage("§7§l[§8§lCycled§c§lLife§7§l]: §fУ вас осталось §c" + String.valueOf(minutes) + " минут §fи §c" + String.valueOf(seconds) + " секунд");
+                TimeData timeData = TimeUtils.getTimeFromSeconds(time);
+                sender.sendMessage("§7§l[§8§lCycled§c§lLife§7§l]: §fУ тебя осталось §c" + String.valueOf(timeData.getHours()) + " часов§f, §c" + String.valueOf(timeData.getMinutes()) + " минут §fи §c" + String.valueOf(timeData.getSeconds()) + " секунд");
             }
         }
         return true;

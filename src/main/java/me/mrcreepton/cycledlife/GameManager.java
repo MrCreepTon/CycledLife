@@ -6,10 +6,10 @@ import me.mrcreepton.cycledlife.models.PlayerModel;
 import me.mrcreepton.cycledlife.models.SpawnData;
 import me.mrcreepton.cycledlife.utils.LocationUtils;
 import org.bukkit.*;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
-import org.omg.CORBA.Environment;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -86,6 +86,8 @@ public class GameManager {
         spawnData.setSpawnyaw(Float.parseFloat(fConfig.getString(path + "spawnyaw")));
         spawnData.setSpawnpitch(Float.parseFloat(fConfig.getString(path + "spawnpitch")));
         spawnData.setEffects((Collection<PotionEffect>) fConfig.get(path + "effects"));
+        spawnData.setXp(Float.parseFloat(fConfig.getString(path + "xp")));
+        spawnData.setLevel(fConfig.getInt(path + "level"));
         spawnData.setWorldtype(fConfig.getInt(path + "worldtype"));
         spawnData.setItems(itemsContent);
         spawnData.setEnderchest(enderChestContent);
@@ -173,6 +175,8 @@ public class GameManager {
         config.getConfig().set("worlds." + "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_CL" + ".spawnyaw", location.getYaw());
         config.getConfig().set("worlds." + "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_CL" + ".spawnpitch", location.getPitch());
         config.getConfig().set("worlds." + "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_CL" + ".worldtype", 0);
+        config.getConfig().set("worlds." + "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_CL" + ".level", 0);
+        config.getConfig().set("worlds." + "world_" + String.valueOf(GameManager.totalWorldsCreated) + "_CL" + ".xp", 0);
 
         config.saveConfig();
 
